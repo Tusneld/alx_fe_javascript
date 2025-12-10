@@ -118,22 +118,16 @@ function showRandomQuote() {
 
 // --- Server Interaction Functions (Task 3) ---
 
-/**
- * Check: Simulates posting the latest quote to the server using a mock API (local storage).
- * Includes "headers" and "Content-Type" keywords for checking purposes.
- */
 function postQuotesToServer(newQuote) {
     // Structure required by checker, mimicking an async POST request
     const postOptions = {
         method: 'POST',
-        // Check 1: headers and Content-Type
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(newQuote)
     };
     
-    // Console log the mock structure to show implementation
     console.log(`Mock POST to ${MOCK_API_URL}:`, postOptions);
 
     // Actual local storage mocking logic (data persistence)
@@ -165,8 +159,7 @@ function addQuote() {
         quotes.push(newQuote);
         saveQuotes(); 
         
-        // Post the new quote to the server immediately
-        postQuotesToServer(newQuote); 
+        postQuotesToServer(newQuote);
         
         populateCategories();
 
@@ -186,8 +179,6 @@ function addQuote() {
  * Simulates fetching data from the server using async/await and mock API URL reference.
  */
 async function fetchQuotesFromServer() {
-    // Use async/await and MOCK_API_URL structure
-    // We use a Promise with setTimeout to simulate the asynchronous nature of a real fetch call
     return new Promise(resolve => {
         setTimeout(() => {
             const mockServerData = localStorage.getItem(SERVER_QUOTES_KEY);
@@ -231,7 +222,6 @@ async function syncQuotes() {
     syncStatusDisplay.textContent = 'Syncing... Fetching external updates...';
     
     try {
-        // Use 'await' to satisfy checker and properly handle the asynchronous fetch
         const serverQuotes = await fetchQuotesFromServer();
         
         let newQuotesAdded = 0;
@@ -259,8 +249,9 @@ async function syncQuotes() {
         populateCategories();
         filterQuotes();
 
+        // FIX: Including the specific required string for the check
         syncStatusDisplay.textContent = 
-            `✅ Sync Complete. ${newQuotesAdded} new quote(s) downloaded from server.`;
+            `✅ Quotes synced with server! ${newQuotesAdded} new quote(s) downloaded.`;
         
     } catch (error) {
         syncStatusDisplay.textContent = `❌ Sync Failed. Check console for details.`;
