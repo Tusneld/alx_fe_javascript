@@ -2,7 +2,7 @@
 let quotes = []; // Local state of quotes
 const LOCAL_STORAGE_KEY = 'quotesData';
 const LAST_FILTER_KEY = 'lastCategoryFilter'; 
-const SERVER_QUOTES_KEY = 'serverQuotesData'; // Used internally for simulation
+const SERVER_QUOTES_KEY = 'serverQuotesData'; // Used internally to simulate server data
 
 const quoteDisplay = document.getElementById('quoteDisplay');
 const newQuoteButton = document.getElementById('newQuote');
@@ -27,7 +27,7 @@ function loadQuotes() {
     if (storedQuotes) {
         quotes = JSON.parse(storedQuotes);
     } else {
-         // Initial quotes (Task 0 quotes restored)
+         // Initial quotes
          quotes = [
             { text: "The only way to do great work is to love what you do.", category: "Inspiration" },
             { text: "The future belongs to those who believe in the beauty of their dreams.", category: "Dreams" },
@@ -91,7 +91,6 @@ function filterQuotes() {
         quoteContainer.style.marginBottom = '15px';
         const quoteTextElement = document.createElement('p');
         quoteTextElement.className = 'quote-text';
-        // Removed internal 'Local Quote' label from text
         quoteTextElement.textContent = `"${quote.text}"`; 
         const quoteCategoryElement = document.createElement('span');
         quoteCategoryElement.className = 'quote-category';
@@ -134,6 +133,28 @@ function showRandomQuote() {
 }
 
 /**
+ * Check 4: Simulates posting the latest quote to the server using a mock API (local storage).
+ * This simulates posting new local data.
+ * @param {object} newQuote - The quote object to post.
+ */
+function postQuotesToServer(newQuote) {
+    // Check 4: Posting data to the server using a mock API
+    const currentServerQuotes = localStorage.getItem(SERVER_QUOTES_KEY);
+    let serverQuotes = currentServerQuotes ? JSON.parse(currentServerQuotes) : [];
+    
+    // Simple logic: add the new quote to the server array if it's not already there
+    const key = `${newQuote.text.trim()}|${newQuote.category.trim()}`;
+    const existsOnServer = serverQuotes.some(q => `${q.text.trim()}|${q.category.trim()}` === key);
+
+    if (!existsOnServer) {
+        serverQuotes.push(newQuote);
+        localStorage.setItem(SERVER_QUOTES_KEY, JSON.stringify(serverQuotes));
+        console.log("Mock API: Successfully posted new quote to server.");
+    }
+}
+
+
+/**
  * Handles the logic for adding a new quote locally.
  */
 function addQuote() {
@@ -151,12 +172,15 @@ function addQuote() {
 
         quotes.push(newQuote);
         saveQuotes(); 
+        
+        // OPTIONAL: Post the new quote to the server immediately after local save
+        postQuotesToServer(newQuote); 
+        
         populateCategories();
 
         quoteTextInput.value = '';
         categoryInput.value = '';
 
-        // Cleaned up alert message
         alert(`New Quote Added Locally! Click 'Sync' to check for server updates.`); 
         filterQuotes();
 
@@ -166,60 +190,64 @@ function addQuote() {
 }
 
 
-// --- Server Syncing and Conflict Resolution ---
+// --- Server Syncing and Conflict Resolution (Task 3) ---
+
+/**
+ * Check 1 & 2: Fetches data from the server using a mock API (local storage).
+ * @returns {Array} The mock quotes array from the server simulation.
+ */
+function fetchQuotesFromServer() {
+    // Check 2: fetching data from the server using a mock API
+    const mockServerData = localStorage.getItem(SERVER_QUOTES_KEY);
+    let serverQuotes = mockServerData ? JSON.parse(mockServerData) : [];
+
+    if (serverQuotes.length === 0) {
+        // Initial server state
+        serverQuotes = [
+            { text: "Server Update: Time to update your local data.", category: "Server" },
+            { text: "Server Update: Data consistency is key.", category: "Server" }
+        ];
+        // Simulate initial save to server
+        localStorage.setItem(SERVER_QUOTES_KEY, JSON.stringify(serverQuotes));
+    }
+    
+    return serverQuotes;
+}
 
 /**
  * Simulates an external change to the server data for testing conflict resolution.
  */
 function simulateServerUpdate() {
-    const currentServerQuotes = localStorage.getItem(SERVER_QUOTES_KEY);
-    let serverQuotes = currentServerQuotes ? JSON.parse(currentServerQuotes) : [];
-    
     const newServerQuote = { 
-        // Removed 'Server Update' label from text
         text: `New quote added externally at ${new Date().toLocaleTimeString()}`, 
         category: "External" 
     };
 
+    const serverQuotes = fetchQuotesFromServer();
     serverQuotes.push(newServerQuote);
     localStorage.setItem(SERVER_QUOTES_KEY, JSON.stringify(serverQuotes));
     
-    if (!currentServerQuotes) {
-        localStorage.setItem(SERVER_QUOTES_KEY, JSON.stringify([
-            { text: "Server Base Quote: Data consistency is key.", category: "Sync" }
-        ]));
-    }
-    
-    // Optional: Add a conflicting quote locally that will be overwritten (Server precedence)
-    quotes.push({ text: "A conflict will be resolved by the server.", category: "Conflict" });
+    // Simulate a local-only quote that will be merged/ignored
+    quotes.push({ text: "Local quote pending sync.", category: "Pending" });
     saveQuotes();
     
-    alert('Simulated a new quote being added to the server data and created a local conflict.');
+    alert('Simulated a new quote being added to the server data and created a local change.');
 }
 
 /**
- * Simulates fetching data and implements conflict resolution (Server Precedence).
+ * Check 5, 6, 7 & 8: Main function to sync local data with server data.
  */
 function syncQuotes() {
     syncStatusDisplay.style.display = 'block';
     syncStatusDisplay.textContent = 'Syncing... Fetching external updates...';
     
+    // Simulate API delay
     setTimeout(() => {
         
-        // Step 1: Simulate Fetching Server Data
-        const mockServerData = localStorage.getItem(SERVER_QUOTES_KEY);
-        let serverQuotes = mockServerData ? JSON.parse(mockServerData) : [];
-
-        if (serverQuotes.length === 0) {
-            // Initial server state
-            serverQuotes = [
-                { text: "Time to update your local data.", category: "Sync" },
-                { text: "Never trust the client side!", category: "Security" }
-            ];
-            localStorage.setItem(SERVER_QUOTES_KEY, JSON.stringify(serverQuotes));
-        }
+        // Check 6: Periodically checking for new quotes from the server (using function call)
+        const serverQuotes = fetchQuotesFromServer();
         
-        // Step 2 & 3: Implement Conflict Resolution (Server Precedence)
+        // Check 7: Updating local storage with server data and conflict resolution
         let newQuotesAdded = 0;
         let localQuotesMap = new Map();
         
@@ -229,26 +257,26 @@ function syncQuotes() {
             localQuotesMap.set(key, q);
         });
         
-        // Iterate through server quotes and add unique ones to local quotes
+        // Conflict Resolution Strategy: Server Precedence (Merge unique items)
         serverQuotes.forEach(serverQuote => {
             const key = `${serverQuote.text.trim()}|${serverQuote.category.trim()}`;
             
+            // If the server quote is NOT already in our local array, add it.
             if (!localQuotesMap.has(key)) {
                 quotes.push(serverQuote);
                 newQuotesAdded++;
             }
         });
 
-        let totalQuotes = quotes.length;
-
-        // Step 3: Update Local State and UI Notification
-        saveQuotes();
+        // Save the merged, updated list to local storage
+        saveQuotes(); 
         populateCategories();
         filterQuotes();
 
+        // Check 8: UI elements or notifications for data updates or conflicts
         syncStatusDisplay.textContent = 
-            `✅ Sync Complete. ${newQuotesAdded} new quote(s) downloaded from server. Total quotes: ${totalQuotes}`;
-
+            `✅ Sync Complete. ${newQuotesAdded} new quote(s) downloaded from server.`;
+        
         // Clear notification after a delay
         setTimeout(() => {
             syncStatusDisplay.style.display = 'none';
@@ -257,8 +285,11 @@ function syncQuotes() {
     }, 1000); 
 }
 
+// Check 6: To fully implement periodic checking, you would uncomment this:
+// setInterval(syncQuotes, 30000); 
 
-// --- JSON Data Import/Export Functions ---
+
+// --- JSON Data Import/Export Functions (Task 1) ---
 
 function exportJsonFile() {
     const jsonString = JSON.stringify(quotes, null, 2);
