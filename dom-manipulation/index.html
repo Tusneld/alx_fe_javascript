@@ -21,7 +21,9 @@
       margin-top: 20px;
       background-color: #eee;
     }
-    .add-quote-form input, .add-quote-form button {
+    .add-quote-form input, .add-quote-form button, 
+    .data-management button, .data-management input,
+    .filter-section select, .filter-section button {
       margin-right: 10px;
       padding: 8px;
     }
@@ -30,11 +32,18 @@
 <body>
   <h1>Dynamic Quote Generator</h1>
 
-  <div id="quoteDisplay">
-    <p>Click "Show New Quote" to see a quote.</p>
+  <<div class="filter-section">
+    <label for="categoryFilter">Filter Quotes by Category:</label>
+    <select id="categoryFilter" onchange="filterQuotes()">
+      </select>
+    <button id="newQuote">Show Random Quote from Filtered</button>
   </div>
-  <button id="newQuote">Show New Quote</button>
+  <hr>
 
+  <div id="quoteDisplay">
+    <p>Loading quotes...</p>
+  </div>
+  
   <hr>
 
   <h2>Add New Quote</h2>
